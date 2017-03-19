@@ -188,14 +188,14 @@ public class TelegramBot {
         }
         
         DispatchQueue.global().async {
-            requestData.withUnsafeBytes { (bytes: UnsafePointer<UInt8>)->Void in
+            requestData.withUnsafeBytes { (bytes: UnsafePointer<Int8>)->Void in
                 self.curlPerformRequest(endpointUrl: endpointUrl, contentType: contentType, requestBytes: bytes, byteCount: requestData.count, completion: completion)
             }
         }
     }
     
     /// Note: performed on global queue
-    private func curlPerformRequest(endpointUrl: URL, contentType: String, requestBytes: UnsafePointer<UInt8>, byteCount: Int, completion: @escaping DataTaskCompletion) {
+    private func curlPerformRequest(endpointUrl: URL, contentType: String, requestBytes: UnsafePointer<Int8>, byteCount: Int, completion: @escaping DataTaskCompletion) {
         var callbackData = WriteCallbackData()
         
         guard let curl = curl_easy_init() else {
@@ -204,15 +204,15 @@ public class TelegramBot {
         }
         defer { curl_easy_cleanup(curl) }
         
-        curl_easy_setopt_string(curl, CURLOPT_URL, endpointUrl.absoluteString)
+        curlHelperSetOptString(curl, CURLOPT_URL, endpointUrl.absoluteString)
         //curl_easy_setopt_int(curl, CURLOPT_SAFE_UPLOAD, 1)
-        curl_easy_setopt_int(curl, CURLOPT_POST, 1)
-        curl_easy_setopt_binary(curl, CURLOPT_POSTFIELDS, requestBytes)
-        curl_easy_setopt_int(curl, CURLOPT_POSTFIELDSIZE, Int32(byteCount))
+        curlHelperSetOptInt(curl, CURLOPT_POST, 1)
+        curlHelperSetOptString(curl, CURLOPT_POSTFIELDS, requestBytes)
+        curlHelperSetOptInt(curl, CURLOPT_POSTFIELDSIZE, byteCount)
         
         var headers: UnsafeMutablePointer<curl_slist>? = nil
         headers = curl_slist_append(headers, "Content-Type: \(contentType)")
-        curl_easy_setopt_slist(curl, CURLOPT_HTTPHEADER, headers)
+        curlHelperSetOptList(curl, CURLOPT_HTTPHEADER, headers)
         defer { curl_slist_free_all(headers) }
         
         let writeFunction: curl_write_callback = { (ptr, size, nmemb, userdata) -> Int in
@@ -225,9 +225,9 @@ public class TelegramBot {
             }
             return count
         }
-        curl_easy_setopt_write_function(curl, CURLOPT_WRITEFUNCTION, writeFunction)
-        curl_easy_setopt_pointer(curl, CURLOPT_WRITEDATA, &callbackData)
-        //curl_easy_setopt_int(curl, CURLOPT_VERBOSE, 1)
+        curlHelperSetOptWriteFunc(curl, &callbackData, writeFunction)
+        curlHelperSetOptInt(curl, CURLOPT_HEADER, 0)
+        //curlHelperSetOptInt(curl, CURLOPT_VERBOSE, 1)
         let code = curl_easy_perform(curl)
         guard code == CURLE_OK else {
             reportCurlError(code: code, completion: completion)
@@ -243,7 +243,7 @@ public class TelegramBot {
         }
         
         var httpCode: Int = 0
-        guard CURLE_OK == curl_easy_getinfo_long(curl, CURLINFO_RESPONSE_CODE, &httpCode) else {
+        guard CURLE_OK == curlHelperGetInfoLong(curl, CURLINFO_RESPONSE_CODE, &httpCode) else {
             reportCurlError(code: code, completion: completion)
             return
         }
