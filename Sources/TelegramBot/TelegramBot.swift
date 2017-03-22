@@ -208,7 +208,7 @@ public class TelegramBot {
         //curl_easy_setopt_int(curl, CURLOPT_SAFE_UPLOAD, 1)
         curlHelperSetOptInt(curl, CURLOPT_POST, 1)
         curlHelperSetOptString(curl, CURLOPT_POSTFIELDS, requestBytes)
-        curlHelperSetOptInt(curl, CURLOPT_POSTFIELDSIZE, byteCount)
+        //curlHelperSetOptInt(curl, CURLOPT_POSTFIELDSIZE, byteCount)
         
         var headers: UnsafeMutablePointer<curl_slist>? = nil
         headers = curl_slist_append(headers, "Content-Type: \(contentType)")
