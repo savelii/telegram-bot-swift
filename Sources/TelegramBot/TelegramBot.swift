@@ -177,7 +177,7 @@ public class TelegramBot {
         } else {
             contentType = "application/x-www-form-urlencoded"
             let encoded = HTTPUtils.formUrlencode(parameters)
-            requestDataOrNil = encoded.data(using: .utf8)
+            requestDataOrNil = encoded.data(using: .utf8) ?? Data()
             logger("endpoint: \(endpoint), data: \(encoded)")
         }
         requestDataOrNil?.append(0)
